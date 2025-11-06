@@ -1,5 +1,5 @@
 export const streamers = [
-  "amariette", "Atemni", "AureliaAlarie", "BBQdPotato", "bunbibi", "Candy_Hearts",
+  "amariettee", "Atemni", "AureliaAlarie", "BBQdPotato", "bunbibi", "Candy_Hearts",
   "CarminVwV", "CiBeans", "DairyDeliveryForce", "doridoriix", "DorkAltDel", "Doughkey",
   "dualmischief_vt", "Ecchi4Kitsune", "EndyEnigma", "Fasla415", "Geekxie", "GhillLoonie",
   "Glorpeep", "GoblinFia", "HerrWesti", "JackFrostVT", "junejunejune", "JustAddBleach",
