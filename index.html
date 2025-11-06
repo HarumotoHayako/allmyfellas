@@ -1,124 +1,108 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Streamer Roulette — Finding someone live...</title>
+  <meta charset="utf-8" />
+  <title>Streamer Roulette</title>
   <style>
     body {
       background: #111;
       color: #eee;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding-top: 80px;
+      padding: 40px;
     }
-    .loading {
-      font-size: 1.6rem;
-      animation: blink 1s infinite ease-in-out;
+    #random-btn {
+      padding: 16px 28px;
+      font-size: 1.4rem;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background: #9146ff;
+      color: white;
+      margin-bottom: 40px;
     }
-    @keyframes blink {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 1; }
+    .streamer-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .streamer {
+      width: 140px;
+      padding: 10px;
+      border-radius: 8px;
+      background: #222;
+      transition: 0.3s;
+    }
+    .streamer.live {
+      box-shadow: 0 0 15px #9146ff;
+    }
+    .streamer img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+    a {
+      color: #eee;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
-  <h1>🎲 Checking who is live...</h1>
-  <p class="loading">Please wait a moment...</p>
+  <h1>Streamer Roulette</h1>
+  <button id="random-btn">🎲 Send Me to Someone Live</button>
 
-  <script>
-    // ↓↓↓ Replace these with your friends' Twitch usernames ↓↓↓
-    const streamers = [
-      "amariette", 
-      "Atemni", 
-      "AureliaAlarie", 
-      "BBQdPotato", 
-      "bunbibi", 
-      "Candy_Hearts", 
-      "CarminVwV", 
-      "CiBeans", 
-      "DairyDeliveryForce", 
-      "doridoriix",
-      "DorkAltDel", 
-      "Doughkey",
-      "dualmischief_vt",
-      "Ecchi4Kitsune",
-      "EndyEnigma",
-      "Fasla415",
-      "Geekxie",
-      "GhillLoonie",
-      "Glorpeep",
-      "GoblinFia",
-      "HerrWesti",
-      "JackFrostVT",
-      "junejunejune",
-      "JustAddBleach",
-      "jonkanpon",
-      "Kat_actual",
-      "KeananNoot",
-      "kiyan_f",
-      "Kiyokamis",
-      "Kopadot",
-      "Luoonar",
-      "LuxHecate",
-      "Novis_VT",
-      "M1iinty",
-      "mahogany_wood_",
-      "MayaHirawa",
-      "meowdekaiser_",
-      "meowiiaa",
-      "MoeTheFrog",
-      "Mxsk___",
-      "panda_iz_daddy",
-      "piyalette",
-      "ProfessorKilobyte",
-      "ProjectUniverseVT",
-      "RemuTenumbrae",
-      "remziie",
-      "RobinandNoxy",
-      "sabbythekiwi",
-      "ShenSratos",
-      "ShuraAlka",
-      "sleepydewpad",
-      "spacecatnyaa",
-      "Squiddy_Nia",
-      "S_Z_B_",
-      "TanukiMask",
-      "TheEternalOmenKuri",
-      "theyClem",
-      "TragedyLink",
-      "TrinityNYC", 
-      "ValeTheBread",
-      "VityaNova69",
-      "WhitEyeVT",
-      "YureiTheYokai",
-      "ZionDenial",
-      "Corvus_Silanchen"]    // ↑↑↑ Replace these with your friends' Twitch usernames ↑↑↑
-    
+  <div class="streamer-list" id="streamerList"></div>
 
-    async function isLive(user) {
-      const res = await fetch(`https://decapi.me/twitch/uptime/${user}`);
-      const text = await res.text();
-      return !text.toLowerCase().includes("offline");
+  <script type="module">
+    import { streamers } from './streamers.js';
+
+    const API = 'https://twitch-proxy.harumotohayako.workers.dev?user=';
+
+    async function getStreamer(user) {
+      const res = await fetch(API + user);
+      return res.json();
     }
 
-    async function findLiveStreamer() {
-      const shuffled = streamers.sort(() => Math.random() - 0.5);
+    async function loadStreamers() {
+      const container = document.getElementById('streamerList');
+      container.innerHTML = '';
 
+      for (const user of streamers) {
+        const data = await getStreamer(user);
+        const live = data.live;
+        const avatar = data.user?.profile_image_url || '';
+        const name = data.user?.display_name || user;
+
+        const div = document.createElement('a');
+        div.href = `https://twitch.tv/${user}`;
+        div.target = '_blank';
+        div.className = 'streamer' + (live ? ' live' : '');
+        div.innerHTML = `
+          <img src="${avatar}" />
+          <div>${name}</div>
+          <div>${live ? '🟢 Live' : '⚫ Offline'}</div>
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    async function randomLive() {
+      const shuffled = [...streamers].sort(() => Math.random() - 0.5);
       for (const user of shuffled) {
-        if (await isLive(user)) {
+        const data = await getStreamer(user);
+        if (data.live) {
           window.location = `https://twitch.tv/${user}`;
           return;
         }
       }
-
-      // If nobody is live:
-      document.body.innerHTML = `
-        <h1>😢 Nobody is live right now.</h1>
-        <p>Check back later — we support each other here 💜</p>
-      `;
+      alert('Nobody is live right now 😢');
     }
 
-    findLiveStreamer();
+    document.getElementById('random-btn').onclick = randomLive;
+    loadStreamers();
   </script>
 </body>
 </html>
