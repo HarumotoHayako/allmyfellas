@@ -1,4 +1,4 @@
-export const streamers = [
+[
   "amariettee", "Atemni", "AureliaAlarie", "BBQdPotato", "bunbibi", "Candy_Hearts",
   "CarminVwV", "CiBeans", "DairyDeliveryForce", "doridoriix", "DorkAltDel", "Doughkey",
   "dualmischief_vt", "Ecchi4Kitsune", "EndyEnigma", "Fasla415", "Geekxie", "GhillLoonie",
@@ -10,4 +10,4 @@ export const streamers = [
   "ShenSratos", "ShuraAlka", "sleepydewpad", "spacecatnyaa", "Squiddy_Nia", "S_Z_B_",
   "TanukiMask", "TheEternalOmenKuri", "theyClem", "TragedyLink", "TrinityNYC",
   "ValeTheBread", "VityaNova69", "WhitEyeVT", "YureiTheYokai", "ZionDenial", "Corvus_Silanchen"
-];
+]
