@@ -1,4 +1,4 @@
-<!-- 1 -->
+<!-- 2 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,129 +21,102 @@
     background: #9146ff;
     color: white;
     transition: transform 0.2s;
+    margin-bottom: 30px;
   }
-  #random-btn:hover {
-    transform: scale(1.05);
-  }
-  .streamer-section {
-    margin-top: 40px;
-  }
+  #random-btn:hover { transform: scale(1.05); }
   .section-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     margin: 20px 0 10px 0;
   }
-  .streamer-grid {
+  .streamer-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 20px;
+    gap: 12px;
+    margin-bottom: 30px;
   }
   .streamer-card {
-    width: 140px;
+    width: 120px;
+    padding: 8px;
+    border-radius: 10px;
     background: #222;
-    border-radius: 12px;
-    padding: 10px;
     text-align: center;
     transition: transform 0.2s;
   }
-  .streamer-card:hover {
-    transform: scale(1.05);
-  }
-  .profile-pic {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 10px;
-  }
-  .online {
-    box-shadow: 0 0 15px #a84bff;
-    border: 2px solid #a84bff;
-  }
-  .game-title {
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-top: 4px;
-  }
+  .streamer-card.live { box-shadow: 0 0 10px 2px #9146ff; }
+  .streamer-card img { width: 80px; height: 80px; border-radius: 50%; }
+  .streamer-card:hover { transform: scale(1.05); }
+  .offline { filter: grayscale(100%) brightness(0.7); }
+  .game { font-size: 0.8rem; color: #ccc; }
 </style>
 </head>
 <body>
-<h1>🎲 Streamer Roulette</h1>
-<button id="random-btn">Send Me To Someone LIVE</button>
-<div class="streamer-section">
-  <div class="section-title">Online</div>
-  <div id="online-grid" class="streamer-grid"></div>
-</div>
-<div class="streamer-section">
-  <div class="section-title">Offline</div>
-  <div id="offline-grid" class="streamer-grid"></div>
-</div>
+  <h1>Streamer Roulette 🎲</h1>
+  <button id="random-btn">Go to a Random Live Stream</button>
+  <div id="online-section">
+    <div class="section-title">Online</div>
+    <div class="streamer-container" id="online-container"></div>
+  </div>
+  <div id="offline-section">
+    <div class="section-title">Offline</div>
+    <div class="streamer-container" id="offline-container"></div>
+  </div>
 
 <script type="module">
 import { streamers } from './streamers.js';
-
 const WORKER_URL = 'https://twitch-proxy.harumotohayako.workers.dev';
 
-async function getStreamerData(user) {
-  try {
-    const res = await fetch(`${WORKER_URL}?user=${user}`);
-    return res.json();
-  } catch (e) {
-    return { user: { display_name: user, profile_image_url: '' }, live: false, stream: null };
-  }
+async function fetchAllStreamers() {
+  const res = await fetch(`${WORKER_URL}?all=true`);
+  const data = await res.json();
+  return data; // { online: [...], offline: [...] }
 }
 
 function shuffleArray(array) {
   return array.sort(() => Math.random() - 0.5);
 }
 
-async function buildGrids() {
-  const onlineGrid = document.getElementById('online-grid');
-  const offlineGrid = document.getElementById('offline-grid');
-  onlineGrid.innerHTML = '';
-  offlineGrid.innerHTML = '';
+function renderStreamers(online, offline) {
+  const onlineContainer = document.getElementById('online-container');
+  const offlineContainer = document.getElementById('offline-container');
+  onlineContainer.innerHTML = '';
+  offlineContainer.innerHTML = '';
 
-  const shuffled = shuffleArray([...streamers]);
+  shuffleArray(online).forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'streamer-card live';
+    div.innerHTML = `<a href='https://twitch.tv/${s.user}' target='_blank'><img src='${s.avatar}' /><div>${s.user}</div><div class='game'>${s.game}</div></a>`;
+    onlineContainer.appendChild(div);
+  });
 
-  const onlineArr = [];
-  const offlineArr = [];
-
-  for (const user of shuffled) {
-    const data = await getStreamerData(user);
-    const card = document.createElement('a');
-    card.href = `https://twitch.tv/${user}`;
-    card.className = 'streamer-card';
-    if (data.live) card.classList.add('online');
-    card.innerHTML = `<img class='profile-pic' src='${data.user.profile_image_url}'><div>${data.user.display_name}</div><div class='game-title'>${data.stream ? data.stream.game_name : 'Offline'}</div>`;
-
-    if (data.live) onlineArr.push(card);
-    else offlineArr.push(card);
-  }
-
-  // Shuffle online/offline separately
-  shuffleArray(onlineArr).forEach(c => onlineGrid.appendChild(c));
-  shuffleArray(offlineArr).forEach(c => offlineGrid.appendChild(c));
+  shuffleArray(offline).forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'streamer-card offline';
+    div.innerHTML = `<a href='https://twitch.tv/${s.user}' target='_blank'><img src='${s.avatar}' /><div>${s.user}</div><div class='game'>${s.game}</div></a>`;
+    offlineContainer.appendChild(div);
+  });
 }
 
-async function randomLive() {
-  const liveUsers = [];
-  for (const user of streamers) {
-    const data = await getStreamerData(user);
-    if (data.live) liveUsers.push(user);
-  }
-  if (liveUsers.length > 0) {
-    const pick = liveUsers[Math.floor(Math.random() * liveUsers.length)];
-    window.location = `https://twitch.tv/${pick}`;
-  } else {
-    alert('Nobody is live right now 😢');
+async function updateUI() {
+  try {
+    const data = await fetchAllStreamers();
+    renderStreamers(data.online, data.offline);
+  } catch (e) {
+    console.error(e);
   }
 }
 
-document.getElementById('random-btn').onclick = randomLive;
+document.getElementById('random-btn').addEventListener('click', async () => {
+  const data = await fetchAllStreamers();
+  if (data.online.length === 0) { alert('Nobody is live right now!'); return; }
+  const random = data.online[Math.floor(Math.random() * data.online.length)];
+  window.open(`https://twitch.tv/${random.user}`, '_blank');
+});
 
-// Initial build & refresh every 60s
-buildGrids();
-setInterval(buildGrids, 60000);
+// Initial load and refresh every 60s
+updateUI();
+setInterval(updateUI, 60000);
 </script>
 </body>
 </html>
+
