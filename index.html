@@ -20,6 +20,7 @@
     background: #9146ff;
     color: white;
     transition: transform 0.2s;
+    margin-bottom: 30px;
   }
   #random-btn:hover {
     transform: scale(1.05);
@@ -29,15 +30,14 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
-    margin-top: 40px;
   }
   .streamer-card {
-    width: 120px;
-    padding: 10px;
-    border-radius: 12px;
+    width: 140px;
     background: #222;
+    border-radius: 12px;
+    padding: 10px;
     text-align: center;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s;
   }
   .streamer-card:hover {
     transform: scale(1.05);
@@ -47,77 +47,91 @@
     height: 80px;
     border-radius: 50%;
     object-fit: cover;
-    margin-bottom: 8px;
-    transition: filter 0.2s, box-shadow 0.2s;
+    margin-bottom: 10px;
   }
   .online {
-    box-shadow: 0 0 15px #a84bff;
-    filter: none;
+    box-shadow: 0 0 12px #a84bff;
+    border: 2px solid #a84bff;
   }
   .offline {
-    filter: grayscale(100%) brightness(60%);
+    filter: grayscale(80%) brightness(0.6);
+  }
+  .game-title {
+    font-size: 0.85rem;
+    color: #ccc;
   }
 </style>
 </head>
 <body>
 <h1>🎲 Streamer Roulette</h1>
-<button id="random-btn">Random Live Streamer</button>
+<button id="random-btn">Send Me To Someone LIVE</button>
 <div id="streamer-grid"></div>
-
 <script type="module">
 import { streamers } from './streamers.js';
 
 const WORKER_URL = 'https://twitch-proxy.harumotohayako.workers.dev';
 const grid = document.getElementById('streamer-grid');
 
-async function fetchStreamerData(user) {
-  try {
-    const res = await fetch(`${WORKER_URL}?user=${user}`);
-    return await res.json();
-  } catch (err) {
-    console.error(err);
-    return { user: { display_name: user, profile_image_url: '' }, live: false };
-  }
+async function getStreamerData(user) {
+  const res = await fetch(`${WORKER_URL}?user=${user}`);
+  return res.json();
 }
 
-async function buildStreamerGrid() {
+function shuffleArray(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+async function buildList() {
   grid.innerHTML = '';
-  for (const user of streamers) {
-    const data = await fetchStreamerData(user);
+  const shuffled = shuffleArray([...streamers]);
+  const online = [];
+  const offline = [];
+
+  for (const user of shuffled) {
+    const data = await getStreamerData(user);
     const card = document.createElement('a');
     card.href = `https://twitch.tv/${user}`;
     card.target = '_blank';
     card.className = 'streamer-card';
 
-    const img = document.createElement('img');
-    img.src = data.user.profile_image_url || 'https://via.placeholder.com/80';
-    img.className = 'profile-pic ' + (data.live ? 'online' : 'offline');
+    const avatar = data.user?.profile_image_url || '';
+    const game = data.stream?.game_name || 'Offline';
+    card.innerHTML = `<img class='profile-pic' src='${avatar}' /><div>${user}</div><div class='game-title'>${game}</div>`;
 
-    const name = document.createElement('div');
-    name.textContent = data.user.display_name;
-
-    card.appendChild(img);
-    card.appendChild(name);
-    grid.appendChild(card);
+    if (data.live) {
+      card.classList.add('online');
+      online.push(card);
+    } else {
+      card.classList.add('offline');
+      offline.push(card);
+    }
   }
+
+  shuffleArray(online).forEach(c => grid.appendChild(c));
+  shuffleArray(offline).forEach(c => grid.appendChild(c));
 }
 
-async function randomLiveStreamer() {
+async function randomRedirect() {
   const liveList = [];
   for (const user of streamers) {
-    const data = await fetchStreamerData(user);
+    const data = await getStreamerData(user);
     if (data.live) liveList.push(user);
   }
-  if (liveList.length === 0) {
-    alert('😢 Nobody is live right now!');
-    return;
+  if (liveList.length > 0) {
+    const pick = liveList[Math.floor(Math.random() * liveList.length)];
+    window.location = `https://twitch.tv/${pick}`;
+  } else {
+    alert('Nobody is live right now 😢');
   }
-  const pick = liveList[Math.floor(Math.random() * liveList.length)];
-  window.open(`https://twitch.tv/${pick}`, '_blank');
 }
 
-document.getElementById('random-btn').addEventListener('click', randomLiveStreamer);
-buildStreamerGrid();
+document.getElementById('random-btn').onclick = randomRedirect;
+
+// Initial build
+buildList();
+
+// Auto-refresh every 60 seconds
+setInterval(buildList, 60000);
 </script>
 </body>
 </html>
