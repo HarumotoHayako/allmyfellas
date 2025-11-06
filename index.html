@@ -1,4 +1,4 @@
-<!-- 2 -->
+<!-- 3 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,102 +21,88 @@
     background: #9146ff;
     color: white;
     transition: transform 0.2s;
-    margin-bottom: 30px;
   }
   #random-btn:hover { transform: scale(1.05); }
-  .section-title {
-    font-size: 1.4rem;
-    margin: 20px 0 10px 0;
-  }
-  .streamer-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    margin-bottom: 30px;
-  }
+  .section { margin-top: 40px; }
   .streamer-card {
-    width: 120px;
-    padding: 8px;
-    border-radius: 10px;
-    background: #222;
+    display: inline-block;
+    margin: 10px;
     text-align: center;
     transition: transform 0.2s;
   }
-  .streamer-card.live { box-shadow: 0 0 10px 2px #9146ff; }
-  .streamer-card img { width: 80px; height: 80px; border-radius: 50%; }
   .streamer-card:hover { transform: scale(1.05); }
-  .offline { filter: grayscale(100%) brightness(0.7); }
-  .game { font-size: 0.8rem; color: #ccc; }
+  .avatar { width: 80px; height: 80px; border-radius: 50%; }
+  .live { box-shadow: 0 0 20px #9146ff; }
+  .offline { filter: grayscale(100%); opacity: 0.5; }
 </style>
 </head>
 <body>
-  <h1>Streamer Roulette 🎲</h1>
-  <button id="random-btn">Go to a Random Live Stream</button>
-  <div id="online-section">
-    <div class="section-title">Online</div>
-    <div class="streamer-container" id="online-container"></div>
-  </div>
-  <div id="offline-section">
-    <div class="section-title">Offline</div>
-    <div class="streamer-container" id="offline-container"></div>
+  <h1>🎲 Streamer Roulette</h1>
+  <button id="random-btn">Random Live Streamer</button>
+
+  <div class="section" id="online-container">
+    <h2>🟢 Online</h2>
   </div>
 
-<script type="module">
-import { streamers } from './streamers.js';
-const WORKER_URL = 'https://twitch-proxy.harumotohayako.workers.dev';
+  <div class="section" id="offline-container">
+    <h2>⚪ Offline</h2>
+  </div>
 
-async function fetchAllStreamers() {
-  const res = await fetch(`${WORKER_URL}?all=true`);
-  const data = await res.json();
-  return data; // { online: [...], offline: [...] }
+<script>
+const WORKER_URL = 'https://twitch-proxy.harumotohayako.workers.dev?all=true';
+const REFRESH_INTERVAL = 60000;
+
+async function fetchStreamers() {
+  const res = await fetch(WORKER_URL);
+  return res.json();
 }
 
-function shuffleArray(array) {
-  return array.sort(() => Math.random() - 0.5);
-}
+function renderStreamers(data) {
+  const onlineDiv = document.getElementById('online-container');
+  const offlineDiv = document.getElementById('offline-container');
+  onlineDiv.innerHTML = '<h2>🟢 Online</h2>';
+  offlineDiv.innerHTML = '<h2>⚪ Offline</h2>';
 
-function renderStreamers(online, offline) {
-  const onlineContainer = document.getElementById('online-container');
-  const offlineContainer = document.getElementById('offline-container');
-  onlineContainer.innerHTML = '';
-  offlineContainer.innerHTML = '';
+  // shuffle function
+  const shuffle = arr => arr.sort(() => Math.random() - 0.5);
 
-  shuffleArray(online).forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'streamer-card live';
-    div.innerHTML = `<a href='https://twitch.tv/${s.user}' target='_blank'><img src='${s.avatar}' /><div>${s.user}</div><div class='game'>${s.game}</div></a>`;
-    onlineContainer.appendChild(div);
+  shuffle(data.online).forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'streamer-card live';
+    card.innerHTML = `<img src="${s.avatar}" class="avatar"><div>${s.user}</div><div>${s.game}</div>`;
+    card.onclick = () => window.open(`https://twitch.tv/${s.user}`, '_blank');
+    onlineDiv.appendChild(card);
   });
 
-  shuffleArray(offline).forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'streamer-card offline';
-    div.innerHTML = `<a href='https://twitch.tv/${s.user}' target='_blank'><img src='${s.avatar}' /><div>${s.user}</div><div class='game'>${s.game}</div></a>`;
-    offlineContainer.appendChild(div);
+  shuffle(data.offline).forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'streamer-card offline';
+    card.innerHTML = `<img src="${s.avatar}" class="avatar"><div>${s.user}</div><div>${s.game}</div>`;
+    card.onclick = () => window.open(`https://twitch.tv/${s.user}`, '_blank');
+    offlineDiv.appendChild(card);
   });
 }
 
-async function updateUI() {
-  try {
-    const data = await fetchAllStreamers();
-    renderStreamers(data.online, data.offline);
-  } catch (e) {
-    console.error(e);
+async function refresh() {
+  const data = await fetchStreamers();
+  renderStreamers(data);
+}
+
+document.getElementById('random-btn').onclick = async () => {
+  const data = await fetchStreamers();
+  if (data.online.length === 0) {
+    alert('Nobody is live right now!');
+    return;
   }
-}
-
-document.getElementById('random-btn').addEventListener('click', async () => {
-  const data = await fetchAllStreamers();
-  if (data.online.length === 0) { alert('Nobody is live right now!'); return; }
   const random = data.online[Math.floor(Math.random() * data.online.length)];
   window.open(`https://twitch.tv/${random.user}`, '_blank');
-});
+}
 
-// Initial load and refresh every 60s
-updateUI();
-setInterval(updateUI, 60000);
+// Initial load + interval refresh
+refresh();
+setInterval(refresh, REFRESH_INTERVAL);
 </script>
 </body>
 </html>
+
 
