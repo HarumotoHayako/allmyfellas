@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Streamer Roulette — Finding someone live...</title>
+  <style>
+    body {
+      background: #111;
+      color: #eee;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 80px;
+    }
+    .loading {
+      font-size: 1.6rem;
+      animation: blink 1s infinite ease-in-out;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🎲 Checking who is live...</h1>
+  <p class="loading">Please wait a moment...</p>
+
+  <script>
+    // ↓↓↓ Replace these with your friends' Twitch usernames ↓↓↓
+    const streamers = [
+      "endyenigma",
+      "candy_hearts",
+      "syronivane",
+      "fatemagnet"
+    ];
+    // ↑↑↑ Replace these with your friends' Twitch usernames ↑↑↑
+
+    async function isLive(user) {
+      const res = await fetch(`https://decapi.me/twitch/uptime/${user}`);
+      const text = await res.text();
+      return !text.toLowerCase().includes("offline");
+    }
+
+    async function findLiveStreamer() {
+      const shuffled = streamers.sort(() => Math.random() - 0.5);
+
+      for (const user of shuffled) {
+        if (await isLive(user)) {
+          window.location = `https://twitch.tv/${user}`;
+          return;
+        }
+      }
+
+      // If nobody is live:
+      document.body.innerHTML = `
+        <h1>😢 Nobody is live right now.</h1>
+        <p>Check back later — we support each other here 💜</p>
+      `;
+    }
+
+    findLiveStreamer();
+  </script>
+</body>
+</html>
