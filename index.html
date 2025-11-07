@@ -1,49 +1,44 @@
 <!-- 
-4
+5
 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nova+Mono&family=Rubik+Bubbles&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne+Mono&display=swap" rel="stylesheet">
 <meta charset="UTF-8">
+<link rel="stylesheet" href="styles.css">
 <title>Streamer Roulette</title>
-<style>
-  body {
-    background: #111;
-    color: #eee;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 40px;
-  }
-  #random-btn {
-    padding: 20px 40px;
-    font-size: 1.6rem;
-    cursor: pointer;
-    border: none;
-    border-radius: 10px;
-    background: #9146ff;
-    color: white;
-    transition: transform 0.2s;
-  }
-  #random-btn:hover { transform: scale(1.05); }
-  .section { margin-top: 40px; }
-  .streamer-card {
-    display: inline-block;
-    margin: 10px;
-    text-align: center;
-    transition: transform 0.2s;
-  }
-  .streamer-card:hover { transform: scale(1.05); }
-  .avatar { width: 80px; height: 80px; border-radius: 50%; }
-  .live { box-shadow: 0 0 20px #9146ff; }
-  .offline { opacity: 0.5; }
-</style>
 </head>
 <body>
-  <h1>🎲 Streamer Roulette</h1>
-  <button id="random-btn">Random Live Streamer</button>
 
+
+<center>
+\-\>
+<button id="random-btn" class="uiverse">
+  <div class="wrapper">
+    <span>CLICK ME</span>
+    <div class="circle circle-12"></div>
+    <div class="circle circle-11"></div>
+    <div class="circle circle-10"></div>
+    <div class="circle circle-9"></div>
+    <div class="circle circle-8"></div>
+    <div class="circle circle-7"></div>
+    <div class="circle circle-6"></div>
+    <div class="circle circle-5"></div>
+    <div class="circle circle-4"></div>
+    <div class="circle circle-3"></div>
+    <div class="circle circle-2"></div>
+    <div class="circle circle-1"></div>
+  </div>
+</button>
+<br><br>
+</center>
+
+  <h2>🟢 Online</h2>
   <div class="section" id="online-container">
-    <h2>🟢 Online</h2>
   </div>
 
   <div class="section" id="offline-container">
@@ -63,29 +58,44 @@ async function fetchStreamers() {
 function renderStreamers(data) {
   const onlineDiv = document.getElementById('online-container');
   const offlineDiv = document.getElementById('offline-container');
-  onlineDiv.innerHTML = '<h2>🟢 Online</h2>';
-  offlineDiv.innerHTML = '<h2>⚪ Offline</h2>';
+  offlineDiv.innerHTML = '<h2>⚪ The Rest Of Them 🥀 </h2>';
+  onlineDiv.innerHTML = '';
 
   const shuffle = arr => arr.sort(() => Math.random() - 0.5);
 
-  shuffle(data.online || []).forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'streamer-card live';
-    card.innerHTML = `
+shuffle(data.online || []).forEach((s, index) => {
+  const card = document.createElement('div');
+  card.className = 'streamer-card live';
+
+  // Alternate background color based on index
+  card.style.backgroundColor = index % 2 === 0 ? '#630041' : '#00968c';
+
+  card.innerHTML = `
+    <div style="
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      padding: 5px;
+      border: dotted; 
+      width: 180px; 
+      height: 180px; 
+      border-radius: 10px; 
+      justify-content: center;">
+      <div style="font-family: Sour Gummy; font-size: 18px;">${s.user}</div>
       <img src="${s.avatar || 'https://via.placeholder.com/80'}" class="avatar">
-      <div>${s.user}</div>
-      <div>${s.game}</div>
-    `;
-    card.onclick = () => window.open(`https://twitch.tv/${s.user}`, '_blank');
-    onlineDiv.appendChild(card);
-  });
+      <div style="font-family: Syne Mono;">🔴LIVE <br> ${s.game}</div>
+    </div>
+  `;
+  card.onclick = () => window.open(`https://twitch.tv/${s.user}`, '_blank');
+  onlineDiv.appendChild(card);
+});
 
   shuffle(data.offline || []).forEach(s => {
     const card = document.createElement('div');
     card.className = 'streamer-card offline';
     card.innerHTML = `
       <img src="${s.avatar || 'https://via.placeholder.com/80'}" class="avatar">
-      <div>${s.user}</div>
+      <div style="font-family: Sour Gummy;">${s.user}</div>
       <div>${s.game}</div>
     `;
     card.onclick = () => window.open(`https://twitch.tv/${s.user}`, '_blank');
@@ -100,13 +110,87 @@ async function refresh() {
 
 document.getElementById('random-btn').onclick = async () => {
   const data = await fetchStreamers();
-  if (!data.online || data.online.length === 0) {
+  const online = data.online || [];
+
+  if (online.length === 0) {
     alert('Nobody is live right now!');
     return;
   }
-  const random = data.online[Math.floor(Math.random() * data.online.length)];
-  window.open(`https://twitch.tv/${random.user}`, '_blank');
-}
+
+  // Hide the normal online display
+  document.getElementById('online-container').style.display = 'none';
+
+  // Create / clear roulette display
+  let rouletteDiv = document.getElementById('roulette-div');
+  if (!rouletteDiv) {
+    rouletteDiv = document.createElement('div');
+    rouletteDiv.id = 'roulette-div';
+    rouletteDiv.style.display = 'flex';
+    rouletteDiv.style.justifyContent = 'center';
+    rouletteDiv.style.alignItems = 'center';
+    rouletteDiv.style.height = '220px';
+    rouletteDiv.style.marginTop = '20px';
+    document.body.insertBefore(rouletteDiv, document.getElementById('offline-container'));
+  }
+  rouletteDiv.innerHTML = '';
+
+  // Shuffle order of online streamers
+  const shuffled = online.sort(() => Math.random() - 0.5);
+
+  // Build card elements for roulette
+  const cardElements = shuffled.map((s, index) => {
+    const card = document.createElement('div');
+    card.className = 'streamer-card live';
+    card.style.backgroundColor = index % 2 === 0 ? '#630041' : '#00968c';
+    card.style.width = '200px';
+    card.style.height = '200px';
+    card.style.borderRadius = '20px';
+    card.style.display = 'none';
+    card.style.flexDirection = 'column';
+    card.style.alignItems = 'center';
+    card.style.justifyContent = 'center';
+    card.style.padding = '8px';
+    card.innerHTML = `
+      <div style="font-family: Sour Gummy; font-size: 18px;">${s.user}</div>
+      <img src="${s.avatar || 'https://via.placeholder.com/80'}" class="avatar">
+      <div style="font-family: Syne Mono;">🔴LIVE <br>${s.game}</div>
+    `;
+    rouletteDiv.appendChild(card);
+    return card;
+  });
+
+  let current = 0;
+  let spins = 0;
+  const totalSpins = 25; // how long it "rolls"
+  const interval = setInterval(() => {
+    // hide all cards
+    cardElements.forEach(c => (c.style.display = 'none'));
+    // show current card
+    cardElements[current].style.display = 'flex';
+
+    current = (current + 1) % cardElements.length;
+    spins++;
+
+    if (spins >= totalSpins) {
+      clearInterval(interval);
+
+      // Final selected streamer
+      const selectedIndex = Math.floor(Math.random() * cardElements.length);
+      cardElements.forEach((c, i) => (c.style.display = i === selectedIndex ? 'flex' : 'none'));
+
+      const finalPick = shuffled[selectedIndex];
+
+     // Pause for dramatic effect, then open stream
+     setTimeout(() => {
+       window.location.href = `https://twitch.tv/${finalPick.user}`;
+
+       // If you want to keep showing the roulette result briefly, remove this part:
+       document.getElementById('online-container').style.display = 'flex';
+       rouletteDiv.innerHTML = '';
+    }, 900);
+    }
+  }, 150); // speed of shuffle
+};
 
 // Initial load + auto-refresh
 refresh();
@@ -114,5 +198,4 @@ setInterval(refresh, REFRESH_INTERVAL);
 </script>
 </body>
 </html>
-
 
