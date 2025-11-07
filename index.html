@@ -1,4 +1,6 @@
-<!-- 3 -->
+<!-- 
+4
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,7 +56,8 @@ const REFRESH_INTERVAL = 60000;
 
 async function fetchStreamers() {
   const res = await fetch(WORKER_URL);
-  return res.json();
+  const data = await res.json();
+  return data;
 }
 
 function renderStreamers(data) {
@@ -63,21 +66,28 @@ function renderStreamers(data) {
   onlineDiv.innerHTML = '<h2>🟢 Online</h2>';
   offlineDiv.innerHTML = '<h2>⚪ Offline</h2>';
 
-  // shuffle function
   const shuffle = arr => arr.sort(() => Math.random() - 0.5);
 
-  shuffle(data.online).forEach(s => {
+  shuffle(data.online || []).forEach(s => {
     const card = document.createElement('div');
     card.className = 'streamer-card live';
-    card.innerHTML = `<img src="${s.avatar}" class="avatar"><div>${s.user}</div><div>${s.game}</div>`;
+    card.innerHTML = `
+      <img src="${s.avatar || 'https://via.placeholder.com/80'}" class="avatar">
+      <div>${s.user}</div>
+      <div>${s.game}</div>
+    `;
     card.onclick = () => window.open(`https://twitch.tv/${s.user}`, '_blank');
     onlineDiv.appendChild(card);
   });
 
-  shuffle(data.offline).forEach(s => {
+  shuffle(data.offline || []).forEach(s => {
     const card = document.createElement('div');
     card.className = 'streamer-card offline';
-    card.innerHTML = `<img src="${s.avatar}" class="avatar"><div>${s.user}</div><div>${s.game}</div>`;
+    card.innerHTML = `
+      <img src="${s.avatar || 'https://via.placeholder.com/80'}" class="avatar">
+      <div>${s.user}</div>
+      <div>${s.game}</div>
+    `;
     card.onclick = () => window.open(`https://twitch.tv/${s.user}`, '_blank');
     offlineDiv.appendChild(card);
   });
@@ -90,7 +100,7 @@ async function refresh() {
 
 document.getElementById('random-btn').onclick = async () => {
   const data = await fetchStreamers();
-  if (data.online.length === 0) {
+  if (!data.online || data.online.length === 0) {
     alert('Nobody is live right now!');
     return;
   }
@@ -98,7 +108,7 @@ document.getElementById('random-btn').onclick = async () => {
   window.open(`https://twitch.tv/${random.user}`, '_blank');
 }
 
-// Initial load + interval refresh
+// Initial load + auto-refresh
 refresh();
 setInterval(refresh, REFRESH_INTERVAL);
 </script>
